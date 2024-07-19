@@ -1,1 +1,141 @@
+rm(list=ls(all=TRUE))
+
+library(extraDistr)
+
+m=10000
+n=1000
+
+rzkip <- function(n,par) {
+  p=c(par[1],par[2],(1-(par[1]+par[2])))
+  outt=rep(0,n)
+  for(i in 1:n)
+   {
+    ran=sample(c(0,1,2), size=1, prob=p)
+    if(ran==0) outt[i]=0
+    else if(ran==1) outt[i]=2
+    else if(ran==2) outt[i]=rdweibull(1,par[3],par[4])
+   }
+return(outt)
+}  
+
+w_p_1=w_p_2=la_p=w_geo_1=w_geo_2=p_geo=w_dw_1=w_dw_2=p1=p2=l_p=l_geo=l_dw=c()
+w_p_1_em=w_p_2_em=la_p_em=w_geo_1_em=w_geo_2_em=p_geo_em=
+w_dw_1_em=w_dw_2_em=p1_em=p2_em=l_p_em=l_geo_em=l_dw_em=c()
+
+for(ii in 1:m){                                                                                                                                                                                                                                                                                                                                                                                                               
+par=c(.05,.05,0.5,0.9)
+y=rzkip(n,par)
+table(y)
+################################################################### MLE
+###################################################################
+###################################################################
+
+#####################################zero-2 poisson
+lf_p<- function(par) {
+  ww2=1-(par[1]+par[2])
+  la2=par[3]
+  d0 <- (par[1] * (y == 0) + par[2] * (y == 2) +
+  ww2 * dpois(y,la2))            
+  -sum(log(d0))
+}
+
+
+ c_i=c(-1,0,0,0)
+ u_i=rbind(c(-1,-1,0),c(1,0,0),c(0,1,0),c(0,0,1))
+ init=c(.1,.1,.1)
+
+ out2_p=constrOptim(init, lf_p, NULL, ui=u_i, ci=c_i)
+
+#####################################zero-2 Geometric
+lf_geo<- function(par) {
+  ww2=1-(par[1]+par[2])
+  d0 <- (par[1] * (y == 0) + par[2] * (y == 2) +
+  ww2 * dgeom(y,par[3]))            
+  -sum(log(d0))
+}
+
+
+ c_i=c(-1,0,0,0,-1)
+ u_i=rbind(c(-1,-1,0),c(1,0,0),c(0,1,0),c(0,0,1),c(0,0,-1))
+ init=c(.1,.1,.1)
+
+ out2_geo=constrOptim(init, lf_geo, NULL, ui=u_i, ci=c_i)
+
+#####################################zero-2 D-Weibull
+lf_dw<- function(par) {
+  ww2=1-(par[1]+par[2])
+  d0 <- (par[1] * (y == 0) + par[2] * (y == 2) +
+  ww2 * ddweibull(y,par[3],par[4]))            
+  -sum(log(d0))
+}
+
+
+ c_i=c(-1,0,0,0,0,-1)
+ u_i=rbind(c(-1,-1,0,0),c(1,0,0,0),c(0,1,0,0),
+c(0,0,1,0),c(0,0,0,1),c(0,0,-1,0))
+ init=c(.1,.1,.5,1)
+
+ out2_dw=constrOptim(init, lf_dw, NULL, ui=u_i, ci=c_i)
+
+
+
+pp_p=out2_p$par
+
+pp_geo=out2_geo$par
+
+pp_dw=out2_dw$par
+
+w_p_1[ii]=pp_p[1]
+w_p_2[ii]=pp_p[2]
+la_p[ii]=pp_p[3]
+
+w_geo_1[ii]=pp_geo[1]
+w_geo_2[ii]=pp_geo[2]
+p_geo[ii]=pp_geo[3]
+
+w_dw_1[ii]=pp_dw[1]
+w_dw_2[ii]=pp_dw[2]
+p1[ii]=pp_dw[3]
+p2[ii]=pp_dw[4]
+
+
+l_p[ii]=out2_p$value
+l_geo[ii]=out2_geo$value
+l_dw[ii]=out2_dw$value
+
+print(ii)
+}
+
+
+round(mean(w_p_1),4)
+round(mean(w_p_2),4)
+round(mean(la_p),4)
+
+round(mean((w_p_1-0.05)^2),4)
+round(mean((w_p_2-0.05)^2),4)
+
+
+round(mean(w_geo_1),4)
+round(mean(w_geo_2),4)
+round(mean(p_geo),4)
+
+round(mean((w_geo_1-0.05)^2),4)
+round(mean((w_geo_2-0.05)^2),4)
+
+
+round(mean(w_dw_1),4)
+round(mean(w_dw_2),4)
+round(mean(p1),4)
+round(mean(p2),4)
+
+round(mean((w_dw_1-0.05)^2),4)
+round(mean((w_dw_2-0.05)^2),4)
+round(mean((p1-0.5)^2),4)
+round(mean((p2-0.9)^2),4)
+
+round(mean(l_p),4)
+round(mean(l_geo),4)
+round(mean(l_dw),4)
+
+
 
